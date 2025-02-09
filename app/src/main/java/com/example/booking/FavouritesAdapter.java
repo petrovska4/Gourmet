@@ -44,8 +44,9 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.Vi
         double distance = getDistance(userLat, userLng, restaurant.getLatitude(), restaurant.getLongitude());
         holder.restaurantDistance.setText(String.format("Distance: %.2f km", distance));
 
-//        holder.restaurantRating.setText("Rating: " + (restaurant.getRating() > 0 ? restaurant.getRating() : "No ratings yet"));
-        holder.restaurantRating.setText("Rating: 0");
+        float rating = (float) ((float) restaurant.getRevSum() / restaurant.getRevCnt());
+
+        holder.restaurantRating.setText("Rating: " + (rating > 0 ? rating : "No ratings yet"));
 
         holder.btnDetails.setOnClickListener(v -> {
             Intent intent = new Intent(context, RestaurantDetailsActivity.class);
@@ -54,7 +55,21 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.Vi
         });
 
         holder.btnAddReview.setOnClickListener(v -> {
-            showReviewDialog(restaurant.getRestaurantId());
+            FirebaseUtils.checkIfReviewExists(restaurant.getRestaurantId(), new FirebaseUtils.OnReviewCheckListener() {
+                @Override
+                public void onCheckCompleted(boolean exists) {
+                    if (exists) {
+                        Toast.makeText(v.getContext(), "You have already left a review for this restaurant", Toast.LENGTH_SHORT).show();
+                    } else {
+                        showReviewDialog(restaurant.getRestaurantId());
+                    }
+                }
+
+                @Override
+                public void onFailure(String error) {
+                    Toast.makeText(v.getContext(), "Error checking review: " + error, Toast.LENGTH_SHORT).show();
+                }
+            });
         });
     }
 

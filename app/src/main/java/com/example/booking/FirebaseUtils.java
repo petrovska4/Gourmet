@@ -7,10 +7,10 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -69,7 +69,7 @@ public class FirebaseUtils {
 
         if (user != null) {
             String userId = user.getUid();
-            Restaurant restaurant = new Restaurant(userId, name, address, phone, latitude, longitude);
+            Restaurant restaurant = new Restaurant(userId, name, address, phone, latitude, longitude, 0.0, 0.0);
 
             db.collection("restaurants")
                     .add(restaurant)
@@ -133,14 +133,12 @@ public class FirebaseUtils {
                         List<Task<QuerySnapshot>> tasks = new ArrayList<>();
 
                         if (queryDocumentSnapshots.isEmpty()) {
-                            Log.d("Favourites", "No favourites found for user: " + userId);
-                            callback.onSuccess(new ArrayList<>()); // Return empty list
+                            callback.onSuccess(new ArrayList<>());
                             return;
                         }
 
                         for (DocumentSnapshot document : queryDocumentSnapshots) {
                             String restaurantId = document.getString("restaurantId");
-                            Log.d("Favourites", "Found restaurant ID: " + restaurantId);
 
                             if (restaurantId != null) {
                                 Task<QuerySnapshot> task = db.collection("restaurants")
@@ -160,17 +158,14 @@ public class FirebaseUtils {
 
                         Tasks.whenAllComplete(tasks)
                                 .addOnSuccessListener(taskResults -> {
-                                    Log.d("Favourites", "Returning restaurant list: " + restaurantList.size());
                                     callback.onSuccess(restaurantList);
                                 })
                                 .addOnFailureListener(e -> {
-                                    Log.e("Favourites", "Error: " + e.getMessage());
                                     callback.onFailure(e.getMessage());
                                 });
 
                     })
                     .addOnFailureListener(e -> {
-                        Log.e("Favourites", "Error: " + e.getMessage());
                         callback.onFailure(e.getMessage());
                     });
         } else {
@@ -194,9 +189,10 @@ public class FirebaseUtils {
                         String userId = document.getString("userId");
                         double longitude = document.getDouble("longitude") != null ? document.getDouble("longitude") : 0.0;
                         double latitude = document.getDouble("latitude") != null ? document.getDouble("latitude") : 0.0;
-                        double rating = document.getDouble("rating") != null ? document.getDouble("rating") : 0.0;
+                        double revSum = document.getDouble("revSum") != null ? document.getDouble("revSum") : 0.0;
+                        double revCnt = document.getDouble("revCnt") != null ? document.getDouble("revCnt") : 0.0;
 
-                        listener.onSuccess(new Restaurant(restaurantId, userId, name, address, phone, latitude, longitude));
+                        listener.onSuccess(new Restaurant(restaurantId, userId, name, address, phone, latitude, longitude, revSum, revCnt));
                     } else {
                         listener.onFailure("Restaurant not found");
                     }
@@ -235,6 +231,23 @@ public class FirebaseUtils {
                 .addOnFailureListener(e -> {
                     Log.e("Firebase", "Error saving review", e);
                 });
+
+        db.collection("restaurants")
+                .whereEqualTo("restaurantId", review.getRestaurantId())
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        DocumentSnapshot restaurantDoc = queryDocumentSnapshots.getDocuments().get(0);
+                        db.collection("restaurants")
+                                .document(restaurantDoc.getId())
+                                .update(
+                                        "revCnt", FieldValue.increment(1),
+                                        "revSum", FieldValue.increment(review.getRating())
+                                )
+                                .addOnFailureListener(e -> Log.e("Firebase", "Error updating restaurant", e));
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("Firebase", "Error fetching restaurant", e));
     }
 
     public static void fetchReviewsByRestaurantId(String restaurantId, OnReviewsFetchedListener listener) {
@@ -253,6 +266,27 @@ public class FirebaseUtils {
                 .addOnFailureListener(e -> {
                     listener.onFailure(e.getMessage());
                 });
+    }
+
+    public static void checkIfReviewExists(String restaurantId, OnReviewCheckListener listener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        String userId = auth.getCurrentUser().getUid();
+
+        db.collection("reviews")
+                .whereEqualTo("restaurantId", restaurantId)
+                .whereEqualTo("userId", userId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    boolean exists = !queryDocumentSnapshots.isEmpty();
+                    listener.onCheckCompleted(exists);
+                })
+                .addOnFailureListener(e -> listener.onFailure(e.getMessage()));
+    }
+
+    public interface OnReviewCheckListener {
+        void onCheckCompleted(boolean exists);
+        void onFailure(String error);
     }
 
     public interface OnRestaurantDetailsListener {

@@ -42,8 +42,9 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
         double distance = getDistance(userLat, userLng, restaurant.getLatitude(), restaurant.getLongitude());
         holder.restaurantDistance.setText(String.format("Distance: %.2f km", distance));
 
-//        holder.restaurantRating.setText("Rating: " + (restaurant.getRating() > 0 ? restaurant.getRating() : "No ratings yet"));
-        holder.restaurantRating.setText("Rating: 0");
+        float rating = (float) ((float) restaurant.getRevSum() / restaurant.getRevCnt());
+
+        holder.restaurantRating.setText("Rating: " + (rating > 0 ? rating : "No ratings yet"));
 
         holder.btnDetails.setOnClickListener(v -> {
             Intent intent = new Intent(context, RestaurantDetailsActivity.class);

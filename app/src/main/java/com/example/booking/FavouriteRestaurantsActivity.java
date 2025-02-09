@@ -21,7 +21,6 @@ import java.util.List;
 public class FavouriteRestaurantsActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private FavouritesAdapter adapter;
-    Button btnShowPopup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

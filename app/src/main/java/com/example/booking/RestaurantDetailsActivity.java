@@ -57,6 +57,7 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
                     addressTextView.setText(restaurant.getAddress());
                     phoneTextView.setText(restaurant.getPhoneNumber());
                     String distance = "Latitude: " + restaurant.getLatitude() + " Longitude: " + restaurant.getLongitude();
+                    ratingTextView.setText("Rating: " + String.valueOf(restaurant.getRevSum() / restaurant.getRevCnt()));
                     distanceTextView.setText(distance);
                     loadReviews(restaurantId);
                 }
@@ -78,17 +79,9 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
         FirebaseUtils.fetchReviewsByRestaurantId(restaurantId, new FirebaseUtils.OnReviewsFetchedListener() {
             @Override
             public void onSuccess(List<Review> reviews) {
-//                reviewList.clear();
-//                reviewList.addAll(reviews);
                 if (reviews.isEmpty()) {
                     ratingTextView.setText("No ratings yet");
                     return;
-                } else {
-                    int sum = 0;
-                    for (Review review : reviews) {
-                        sum += review.getRating();
-                    }
-                    ratingTextView.setText(String.format("%.1f ★", sum / (float) reviews.size()));
                 }
                 int oldSize = reviewList.size();
                 reviewList.addAll(reviews);

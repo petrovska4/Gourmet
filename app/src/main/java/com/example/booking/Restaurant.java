@@ -8,19 +8,23 @@ public class Restaurant {
     private String phoneNumber;
     private double latitude;
     private double longitude;
+    private double revSum;
+    private double revCnt;
 
     public Restaurant() {
     }
-    public Restaurant(String userId, String name, String address, String phoneNumber, double latitude, double longitude) {
+    public Restaurant(String userId, String name, String address, String phoneNumber, double latitude, double longitude, double revSum, double revCnt) {
         this.name = name;
         this.address = address;
         this.phoneNumber = phoneNumber;
         this.latitude = latitude;
         this.longitude = longitude;
         this.userId = userId;
+        this.revSum = revSum;
+        this.revCnt = revCnt;
     }
 
-    public Restaurant(String restaurantId, String userId, String name, String address, String phoneNumber, double latitude, double longitude) {
+    public Restaurant(String restaurantId, String userId, String name, String address, String phoneNumber, double latitude, double longitude, double revSum, double revCnt) {
         this.restaurantId = restaurantId;
         this.name = name;
         this.address = address;
@@ -28,6 +32,8 @@ public class Restaurant {
         this.latitude = latitude;
         this.longitude = longitude;
         this.userId = userId;
+        this.revSum = revSum;
+        this.revCnt = revCnt;
     }
 
     public String getUserId() {
@@ -83,5 +89,21 @@ public class Restaurant {
 
     public void setLongitude(double longitude) {
         this.longitude = longitude;
+    }
+
+    public double getRevSum() {
+        return revSum;
+    }
+
+    public void setRevSum(double revSum) {
+        this.revSum = revSum;
+    }
+
+    public double getRevCnt() {
+        return revCnt;
+    }
+
+    public void setRevCnt(double revCnt) {
+        this.revCnt = revCnt;
     }
 }
