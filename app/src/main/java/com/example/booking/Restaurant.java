@@ -20,6 +20,16 @@ public class Restaurant {
         this.userId = userId;
     }
 
+    public Restaurant(String restaurantId, String userId, String name, String address, String phoneNumber, double latitude, double longitude) {
+        this.restaurantId = restaurantId;
+        this.name = name;
+        this.address = address;
+        this.phoneNumber = phoneNumber;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.userId = userId;
+    }
+
     public String getUserId() {
         return userId;
     }

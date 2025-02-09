@@ -7,6 +7,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -186,6 +188,7 @@ public class FirebaseUtils {
                     if (!queryDocumentSnapshots.isEmpty()) {
                         DocumentSnapshot document = queryDocumentSnapshots.getDocuments().get(0);
 
+                        String restaurantId = document.getString("restaurantId");
                         String address = document.getString("address");
                         String phone = document.getString("phone");
                         String userId = document.getString("userId");
@@ -193,7 +196,7 @@ public class FirebaseUtils {
                         double latitude = document.getDouble("latitude") != null ? document.getDouble("latitude") : 0.0;
                         double rating = document.getDouble("rating") != null ? document.getDouble("rating") : 0.0;
 
-                        listener.onSuccess(new Restaurant(userId, name, address, phone, latitude, longitude));
+                        listener.onSuccess(new Restaurant(restaurantId, userId, name, address, phone, latitude, longitude));
                     } else {
                         listener.onFailure("Restaurant not found");
                     }
@@ -227,10 +230,28 @@ public class FirebaseUtils {
     public static void saveReview(Review review, Runnable onSuccess) {
         db.collection("reviews").add(review)
                 .addOnSuccessListener(documentReference -> {
-                    onSuccess.run();  // Calls the success callback
+                    onSuccess.run();
                 })
                 .addOnFailureListener(e -> {
                     Log.e("Firebase", "Error saving review", e);
+                });
+    }
+
+    public static void fetchReviewsByRestaurantId(String restaurantId, OnReviewsFetchedListener listener) {
+        CollectionReference reviewsRef = db.collection("reviews");
+
+        reviewsRef.whereEqualTo("restaurantId", restaurantId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Review> reviews = new ArrayList<>();
+                    for (DocumentSnapshot snapshot : queryDocumentSnapshots) {
+                        Review review = snapshot.toObject(Review.class);
+                        reviews.add(review);
+                    }
+                    listener.onSuccess(reviews);
+                })
+                .addOnFailureListener(e -> {
+                    listener.onFailure(e.getMessage());
                 });
     }
 
@@ -256,5 +277,10 @@ public class FirebaseUtils {
     public interface FirebaseUserCallback {
         void onSuccess(Boolean status);
         void onFailure(String error);
+    }
+
+    public interface OnReviewsFetchedListener {
+        void onSuccess(List<Review> reviews);
+        void onFailure(String errorMessage);
     }
 }

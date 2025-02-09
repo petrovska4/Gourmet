@@ -7,6 +7,9 @@ public class Review {
     private String comment;
     private double rating;
 
+    public Review() {
+    }
+
     public Review(String reviewId, String userId, String restaurantId, String comment, double rating) {
         this.reviewId = reviewId;
         this.userId = userId;
