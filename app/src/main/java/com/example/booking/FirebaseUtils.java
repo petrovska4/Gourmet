@@ -1,7 +1,9 @@
 package com.example.booking;
 
 
+import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -200,28 +202,44 @@ public class FirebaseUtils {
                 .addOnFailureListener(e -> listener.onFailure("Error fetching data: " + e.getMessage()));
     }
 
-    public static void saveRestaurantAsFavourite(String restaurantId) {
+    public static void saveRestaurantAsFavourite(Context context, String restaurantId) {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         String userId = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
         if (userId == null) {
+            Toast.makeText(context, "User not logged in!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Map<String, Object> favouriteData = new HashMap<>();
-        favouriteData.put("userId", userId);
-        favouriteData.put("restaurantId", restaurantId);
-
         db.collection("favourites")
-                .add(favouriteData)
-                .addOnSuccessListener(documentReference -> {
-                    System.out.println("Favourite saved with ID: " + documentReference.getId());
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("restaurantId", restaurantId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        Toast.makeText(context, "Restaurant is already in favorites!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    Map<String, Object> favouriteData = new HashMap<>();
+                    favouriteData.put("userId", userId);
+                    favouriteData.put("restaurantId", restaurantId);
+
+                    db.collection("favourites")
+                            .add(favouriteData)
+                            .addOnSuccessListener(documentReference -> {
+                                Toast.makeText(context, "Added to favorites!", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(context, "Error saving favorite: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
                 })
                 .addOnFailureListener(e -> {
-                    System.err.println("Error saving favourite: " + e.getMessage());
+                    Toast.makeText(context, "Error checking favorites: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
+
 
     public static void saveReview(Review review, Runnable onSuccess) {
         db.collection("reviews").add(review)

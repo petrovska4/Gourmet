@@ -111,12 +111,22 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 case 3:
                     openFavouriteRestaurantsScreen();
+                    return true;
+                case 4:
+                    logoutUser();
+                    return true;
                 default:
                     return false;
             }
         });
 
         popupMenu.show();
+    }
+
+    private void logoutUser() {
+        FirebaseAuth.getInstance().signOut();
+        startActivity(new Intent(MainActivity.this, LoginActivity.class));
+        finish();
     }
 
     private void openAddRestaurantScreen() {

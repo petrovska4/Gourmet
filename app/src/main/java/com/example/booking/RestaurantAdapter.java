@@ -53,7 +53,7 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Vi
         });
 
         holder.btnFavourite.setOnClickListener(v -> {
-            FirebaseUtils.saveRestaurantAsFavourite(restaurant.getRestaurantId());
+            FirebaseUtils.saveRestaurantAsFavourite(context, restaurant.getRestaurantId());
         });
 
     }

@@ -12,16 +12,26 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class RestaurantDetailsActivity extends AppCompatActivity {
+public class RestaurantDetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private TextView nameTextView, addressTextView, phoneTextView, distanceTextView, ratingTextView;
     private RecyclerView reviewsRecyclerView;
     private ReviewAdapter reviewAdapter;
     private List<Review> reviewList;
     private String restaurantId;
+    private GoogleMap mMap;
+    private double latitude;
+    private double longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +69,12 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
                     String distance = "Latitude: " + restaurant.getLatitude() + " Longitude: " + restaurant.getLongitude();
                     ratingTextView.setText("Rating: " + String.valueOf(restaurant.getRevSum() / restaurant.getRevCnt()));
                     distanceTextView.setText(distance);
+                    latitude = restaurant.getLatitude();
+                    longitude = restaurant.getLongitude();
                     loadReviews(restaurantId);
+                    if (mMap != null) {
+                        updateMapLocation();
+                    }
                 }
 
                 @Override
@@ -69,7 +84,26 @@ public class RestaurantDetailsActivity extends AppCompatActivity {
             });
         }
 
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.mapFragment);
+        mapFragment.getMapAsync(this);
+
     }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        updateMapLocation();
+    }
+
+    private void updateMapLocation() {
+        if (latitude != 0.0 && longitude != 0.0) {
+            LatLng restaurantLocation = new LatLng(latitude, longitude);
+            mMap.addMarker(new MarkerOptions().position(restaurantLocation).title("Restaurant Location"));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(restaurantLocation, 15));
+        }
+    }
+
 
     private void loadReviews(String restaurantId) {
         if(restaurantId == null || restaurantId.isEmpty()) {
